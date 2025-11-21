@@ -23,8 +23,8 @@ from ads_mcp.mcp_header_interceptor import MCPHeaderInterceptor
 # Load environment variables
 load_dotenv()
 
-# Initialize server with SSE transport for HTTP deployment
-mcp = FastMCP("Google Ads MCP Server", transport="sse")
+# Initialize server
+mcp = FastMCP("Google Ads MCP Server")
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -259,12 +259,10 @@ def main():
     print(f"🔑 Required env vars: GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_PROJECT_ID")
     print(f"🏃 Running server...")
     
-    # Force SSE transport for deployment (Elast.io)
-    import sys
-    if '--transport' not in sys.argv:
-        sys.argv.extend(['--transport', 'sse'])
-    
-    mcp.run()
+    # Use SSE transport for HTTP deployment (Elast.io)
+    # Get port from environment or use default 8000
+    port = int(os.environ.get("PORT", 8000))
+    mcp.run(transport="sse", host="0.0.0.0", port=port)
 
 
 if __name__ == "__main__":
