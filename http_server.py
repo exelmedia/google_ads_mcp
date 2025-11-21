@@ -10,8 +10,8 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-# Import the MCP server and tools
-from server import mcp, list_accessible_customers, search
+# Import tools from server module
+import server
 
 app = FastAPI(title="Google Ads MCP HTTP Server")
 
@@ -123,10 +123,14 @@ async def process_mcp_request(request: Dict[str, Any]) -> Dict[str, Any]:
         arguments = params.get("arguments", {})
         
         try:
+            # Get raw functions from server module, not MCP-wrapped tools
             if tool_name == "list_accessible_customers":
-                result = list_accessible_customers()
+                # Access the actual function, not the MCP tool wrapper
+                tool_func = server.mcp._tool_manager._tools["list_accessible_customers"]
+                result = tool_func.fn()
             elif tool_name == "search":
-                result = search(**arguments)
+                tool_func = server.mcp._tool_manager._tools["search"]
+                result = tool_func.fn(**arguments)
             else:
                 return {
                     "error": f"Tool '{tool_name}' not found",
