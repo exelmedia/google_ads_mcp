@@ -10,8 +10,10 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-# Import tools from server module
-import server
+from ads_mcp.coordinator import mcp
+
+# Import tools to register them
+from ads_mcp import tools  # noqa: F401
 
 app = FastAPI(title="Google Ads MCP HTTP Server")
 
@@ -135,35 +137,16 @@ async def process_mcp_request(request: Dict[str, Any]) -> Dict[str, Any]:
     method = request.get("method")
     
     if method == "tools/list":
+        # List available tools from MCP
+        tools = []
+        for name, tool_func in mcp._tool_manager._tools.items():
+            tools.append({
+                "name": name,
+                "description": tool_func.__doc__ or "",
+                "inputSchema": getattr(tool_func, "_mcp_input_schema", {})
+            })
         return {
-            "tools": [
-                {
-                    "name": "list_accessible_customers",
-                    "description": "Returns ids of customers directly accessible by the user authenticating the call.",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {},
-                        "required": []
-                    }
-                },
-                {
-                    "name": "search",
-                    "description": "Fetches data from the Google Ads API using the search method",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "customer_id": {"type": "string"},
-                            "fields": {"type": "array", "items": {"type": "string"}},
-                            "resource": {"type": "string"},
-                            "conditions": {"type": "array", "items": {"type": "string"}},
-                            "orderings": {"type": "array", "items": {"type": "string"}},
-                            "limit": {"type": "integer"},
-                            "query": {"type": "string"}
-                        },
-                        "required": ["customer_id"]
-                    }
-                }
-            ]
+            "tools": tools
         }
     
     elif method == "tools/call":
@@ -171,26 +154,26 @@ async def process_mcp_request(request: Dict[str, Any]) -> Dict[str, Any]:
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
         
+        if tool_name not in mcp._tool_manager._tools:
+            return {
+                "error": f"Tool '{tool_name}' not found",
+                "isError": True
+            }
+        
+        tool_func = mcp._tool_manager._tools[tool_name]
+        
         try:
-            # Get raw functions from server module, not MCP-wrapped tools
-            if tool_name == "list_accessible_customers":
-                # Access the actual function, not the MCP tool wrapper
-                tool_func = server.mcp._tool_manager._tools["list_accessible_customers"]
-                result = tool_func.fn()
-            elif tool_name == "search":
-                tool_func = server.mcp._tool_manager._tools["search"]
-                result = tool_func.fn(**arguments)
+            # Call the tool function
+            if asyncio.iscoroutinefunction(tool_func):
+                result = await tool_func(**arguments)
             else:
-                return {
-                    "error": f"Tool '{tool_name}' not found",
-                    "isError": True
-                }
+                result = tool_func(**arguments)
             
             return {
                 "content": [
                     {
                         "type": "text",
-                        "text": json.dumps(result, indent=2)
+                        "text": json.dumps(result, indent=2) if not isinstance(result, str) else result
                     }
                 ]
             }
@@ -227,10 +210,10 @@ async def process_mcp_request(request: Dict[str, Any]) -> Dict[str, Any]:
 def run_http_server(host: str = "0.0.0.0", port: int = None):
     """Run the HTTP server."""
     if port is None:
-        port = int(os.environ.get("PORT", 3030))
+        port = int(os.environ.get("PORT", 8000))
     
     print(f"🚀 Google Ads MCP HTTP Server starting on {host}:{port}")
-    print(f"📊 Available tools: search, list_accessible_customers")
+    print(f"📊 Available tools: {', '.join(mcp._tool_manager._tools.keys())}")
     print(f"🔑 Required env vars: GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_PROJECT_ID")
     
     uvicorn.run(app, host=host, port=port)
