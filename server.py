@@ -259,6 +259,11 @@ def main():
     print(f"🔑 Required env vars: GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_PROJECT_ID")
     print(f"🏃 Running server...")
     
+    # Force SSE transport for deployment (Elast.io)
+    import sys
+    if '--transport' not in sys.argv:
+        sys.argv.extend(['--transport', 'sse'])
+    
     mcp.run()
 
 
