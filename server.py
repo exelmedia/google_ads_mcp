@@ -18,7 +18,6 @@ from google.ads.googleads.util import get_nested_attr
 from dotenv import load_dotenv
 
 from fastmcp import FastMCP
-from fastapi import FastAPI
 from ads_mcp.mcp_header_interceptor import MCPHeaderInterceptor
 
 # Load environment variables
@@ -27,8 +26,8 @@ load_dotenv()
 # Initialize server
 mcp = FastMCP("Google Ads MCP Server")
 
-# Add health check endpoint for Elast.io
-@mcp.get("/")
+# Add health check endpoint for Elast.io via FastAPI app
+@mcp.app.get("/")
 async def health_check():
     """Health check endpoint for deployment verification"""
     return {
