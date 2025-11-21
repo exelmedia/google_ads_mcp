@@ -252,18 +252,13 @@ def search(
     return final_output
 
 
-def main():
-    """Main entry point"""
+# FastMCP automatically handles SSE transport when using mcp.run()
+# No need for explicit main() function - it causes infinite loop
+if __name__ == "__main__":
     print("🚀 Google Ads MCP Server starting...")
     print(f"📊 Available tools: search, list_accessible_customers")
     print(f"🔑 Required env vars: GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_PROJECT_ID")
-    print(f"🏃 Running server...")
     
-    # Use SSE transport for HTTP deployment (Elast.io)
-    # Get port from environment or use default 8000
-    port = int(os.environ.get("PORT", 8000))
+    # FastMCP will automatically run with SSE transport on port from env
+    port = int(os.environ.get("PORT", 3030))
     mcp.run(transport="sse", host="0.0.0.0", port=port)
-
-
-if __name__ == "__main__":
-    main()
