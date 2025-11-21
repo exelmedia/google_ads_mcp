@@ -42,9 +42,58 @@ async def health():
     return {"status": "healthy"}
 
 
+@app.get("/sse")
+async def sse_endpoint_get(request: Request):
+    """SSE endpoint for MCP communication (GET for streaming)."""
+    async def event_generator():
+        try:
+            # Send endpoint information
+            endpoint_info = {
+                "jsonrpc": "2.0",
+                "method": "endpoint",
+                "params": {
+                    "capabilities": {
+                        "tools": {}
+                    },
+                    "serverInfo": {
+                        "name": "Google Ads MCP Server",
+                        "version": "1.0.0"
+                    }
+                }
+            }
+            yield f"event: endpoint\n"
+            yield f"data: {json.dumps(endpoint_info)}\n\n"
+            
+            # Keep connection alive
+            while True:
+                await asyncio.sleep(30)
+                yield f": keepalive\n\n"
+                
+        except Exception as e:
+            error_response = {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": str(e)
+                }
+            }
+            yield f"event: error\n"
+            yield f"data: {json.dumps(error_response)}\n\n"
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
+
+
 @app.post("/sse")
-async def sse_endpoint(request: Request):
-    """SSE endpoint for MCP communication."""
+async def sse_endpoint_post(request: Request):
+    """SSE endpoint for MCP communication (POST for requests)."""
     async def event_generator():
         try:
             body = await request.json()
