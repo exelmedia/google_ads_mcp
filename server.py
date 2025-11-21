@@ -267,6 +267,8 @@ def main():
     
     # FastMCP will automatically run with SSE transport on port from env
     port = int(os.environ.get("PORT", 3030))
+    print(f"🌐 Starting server on http://0.0.0.0:{port}")
+    print(f"📡 SSE endpoint: http://0.0.0.0:{port}/sse")
     mcp.run(transport="sse", host="0.0.0.0", port=port)
 
 
