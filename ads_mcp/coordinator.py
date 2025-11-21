@@ -8,3 +8,4 @@ from mcp.server.fastmcp import FastMCP
 
 # Creates the singleton.
 mcp = FastMCP("Google Ads MCP Server")
+print(f"🔧 Created MCP instance: {id(mcp)}")

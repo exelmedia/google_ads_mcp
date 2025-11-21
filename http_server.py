@@ -16,11 +16,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
     from ads_mcp.coordinator import mcp
-    print(f"✅ Imported mcp coordinator")
+    print(f"✅ Imported mcp coordinator: {id(mcp)}")
     
     # Import tools to register them
     from ads_mcp import tools  # noqa: F401
     print(f"✅ Imported tools module")
+    print(f"📊 http_server.py: MCP instance: {id(mcp)}")
     print(f"📊 Registered tools: {list(mcp._tool_manager._tools.keys())}")
 except Exception as e:
     print(f"❌ Error importing MCP modules: {e}")
