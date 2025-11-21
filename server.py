@@ -78,18 +78,25 @@ def _get_login_customer_id() -> str:
 
 
 def _get_googleads_client() -> GoogleAdsClient:
-    # Setup credentials from base64 if available
-    _setup_credentials_from_base64()
+    # Priority 1: Setup credentials from base64 if available (for deployment)
+    if _setup_credentials_from_base64():
+        logger.info("Using credentials from GOOGLE_CREDENTIALS_BASE64")
+        client = GoogleAdsClient(
+            credentials=_create_credentials(),
+            developer_token=_get_developer_token(),
+            login_customer_id=_get_login_customer_id()
+        )
+        return client
     
-    # Try to load from google-ads.yaml if exists
+    # Priority 2: Try to load from google-ads.yaml if exists (for local dev)
     yaml_path = os.environ.get('GOOGLE_ADS_YAML_PATH', 'google-ads.yaml')
     if os.path.exists(yaml_path):
         logger.info(f"Loading Google Ads client from {yaml_path}")
         client = GoogleAdsClient.load_from_storage(yaml_path)
         return client
     
-    # Fallback to environment variables
-    logger.info("Loading Google Ads client from environment variables")
+    # Priority 3: Fallback to Application Default Credentials
+    logger.info("Loading Google Ads client from Application Default Credentials")
     client = GoogleAdsClient(
         credentials=_create_credentials(),
         developer_token=_get_developer_token(),
