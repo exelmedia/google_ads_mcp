@@ -4,11 +4,15 @@
 import asyncio
 import json
 import os
+import sys
 from typing import Any, Dict
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+
+# Add current directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from ads_mcp.coordinator import mcp
 
