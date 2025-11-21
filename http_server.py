@@ -210,7 +210,7 @@ async def process_mcp_request(request: Dict[str, Any]) -> Dict[str, Any]:
 def run_http_server(host: str = "0.0.0.0", port: int = None):
     """Run the HTTP server."""
     if port is None:
-        port = int(os.environ.get("PORT", 8000))
+        port = int(os.environ.get("PORT", 3030))
     
     print(f"🚀 Google Ads MCP HTTP Server starting on {host}:{port}")
     print(f"📊 Available tools: {', '.join(mcp._tool_manager._tools.keys())}")
