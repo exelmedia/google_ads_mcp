@@ -33,9 +33,6 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Import interceptor
-from ads_mcp.mcp_header_interceptor import MCPHeaderInterceptor
-
 # Create MCP instance
 mcp = FastMCP("Google Ads MCP Server")
 
@@ -112,9 +109,7 @@ def get_googleads_service(serviceName: str):
     global _googleads_client
     if _googleads_client is None:
         _googleads_client = _get_googleads_client()
-    return _googleads_client.get_service(
-        serviceName, interceptors=[MCPHeaderInterceptor()]
-    )
+    return _googleads_client.get_service(serviceName)
 
 
 def _ensure_serializable(obj: Any) -> Any:
