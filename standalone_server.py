@@ -368,9 +368,17 @@ async def process_mcp_request(request: Dict[str, Any]) -> Dict[str, Any]:
                 "isError": True
             }
         
-        tool_func = mcp._tool_manager._tools[tool_name]
+        tool_wrapper = mcp._tool_manager._tools[tool_name]
         
         try:
+            # Get the actual function from the wrapper
+            if hasattr(tool_wrapper, 'fn'):
+                tool_func = tool_wrapper.fn
+            elif hasattr(tool_wrapper, '__call__'):
+                tool_func = tool_wrapper
+            else:
+                tool_func = tool_wrapper
+            
             if asyncio.iscoroutinefunction(tool_func):
                 result = await tool_func(**arguments)
             else:
