@@ -1,129 +1,195 @@
 # Google Ads MCP Server
 
-The Google Ads MCP Server is an implementation of the Model Context Protocol (MCP) that enables Large Language Models (LLMs), such as Gemini, to interact directly with the Google Ads API.
+MCP (Model Context Protocol) server for Google Ads API. Allows AI assistants to query Google Ads data using the Google Ads API.
 
-**This is not an officially supported Google product.**
+## Features
 
-## Disclaimer
+- **list_accessible_customers**: Get list of accessible customer accounts
+- **search**: Execute GAQL queries to fetch Google Ads data
+- HTTP transport compatible (FastMCP)
+- Secure credential handling (base64 encoding support)
 
-Copyright Google LLC. Supported by Google LLC and/or its affiliate(s). This solution, including any related sample code or data, is made available on an “as is,” “as available,” and “with all faults” basis, solely for illustrative purposes, and without warranty or representation of any kind. This solution is experimental, unsupported and provided solely for your convenience. Your use of it is subject to your agreements with Google, as applicable, and may constitute a beta feature as defined under those agreements. To the extent that you make any data available to Google in connection with your use of the solution, you represent and warrant that you have all necessary and appropriate rights, consents and permissions to permit Google to use and process that data. By using any portion of this solution, you acknowledge, assume and accept all risks, known and unknown, associated with its usage and any processing of data by Google, including with respect to your deployment of any portion of this solution in your systems, or usage in connection with your business, if at all. With respect to the entrustment of personal information to Google, you will verify that the established system is sufficient by checking Google's privacy policy and other public information, and you agree that no further information will be provided by Google.
+## Prerequisites
 
-## Getting Started
+- Python 3.10+
+- Google Cloud Project with Google Ads API enabled
+- Google Ads Developer Token
+- Service Account credentials with Google Ads API access
 
-Follow these instructions to configure and run the Google Ads MCP Server.
+## Local Setup
 
-### 1. Configure Python Environment
-
-#### For Direct Use
-
-This project needs Python 3.12 with `pipx` or `uv`.
-
-#### For Development
-
-This project uses [`uv`](https://github.com/astral-sh/uv) for dependency management.
-
-Install `uv` and then run the following command to install the required Python packages:
+### 1. Install Dependencies
 
 ```bash
-uv pip sync
+pip install -r requirements.txt
 ```
 
-### 2. Configure Google Ads credentials
+### 2. Configure Environment Variables
 
-This tool requires you to have a `google-ads.yaml` file with your Google Ads API credentials. By default, the application will look for this file in your home directory.
-
-If you don't have one, you can generate it by running the following example from the `google-ads-python` library:
-[authentication example](https://github.com/googleads/google-ads-python/blob/main/examples/authentication/generate_user_credentials.py)
-
-Make sure your `google-ads.yaml` file contains the following keys:
-
-- `client_id`
-- `client_secret`
-- `refresh_token`
-- `developer_token`
-- `login_customer_id` (optional, but recommended)
-
-### 3. Launch MCP Server
-
-#### For Direct Use with Gemini CLI
-
-Update your Gemini configuration to include the `google-ads-mcp` server. The following is an example of a local MCP server configuration:
-
-```json5
-{
-  // Other configs...
-  "mcpServers": {
-    "GoogleAds": {
-      "command": "pipx",
-      "args": [
-        "run",
-        "--spec",
-        "git+https://github.com/google-marketing-solutions/google_ads_mcp.git",
-        "run-mcp-server"
-      ],
-      "env": {
-        "GOOGLE_ADS_CREDENTIALS": "PATH_TO_YAML"
-      },
-      "timeout": 30000,
-      "trust": false
-    }
-  }
-}
-```
-
-Once the server is running, you can interact with it using the Gemini CLI. Type `/mcp` in Gemini to see the `Google Ads API` server listed in the results.
-
-#### For Local Development with Gemini CLI
-
-Update your Gemini configuration to include the `google-ads-mcp` server. `[DIRECTORY]` will be the absolute path to the project. The following is an example of a local MCP server configuration:
-
-```json5
-{
-  // Other configs...
-  "mcpServers": {
-    "GoogleAds": {
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "[DIRECTORY]",
-        "-m",
-        "ads_mcp.server"
-      ],
-      "cwd": "[DIRECTORY]",
-      "timeout": 30000,
-      "trust": false
-    }
-  }
-}
-```
-
-Once the server is running, you can interact with it using the Gemini CLI. Type `/mcp` in Gemini to see the `Google Ads API` server listed in the results.
-
-You can then ask questions like:
-
-- "list all campaigns"
-- "show me metrics for campaign `[CAMPAIGN_ID]`"
-- "get all ad groups"
-
-#### Direct Launch
-
-To start the server directly, in the project path, run the following command:
+Copy `.env.example` to `.env` and fill in your credentials:
 
 ```bash
-uv run -m ads_mcp.server
+cp .env.example .env
 ```
 
-The server will start and be ready to accept requests.
+Edit `.env`:
+```
+GOOGLE_PROJECT_ID=your-project-id
+GOOGLE_ADS_DEVELOPER_TOKEN=your-developer-token
+GOOGLE_CREDENTIALS_HOST_PATH=./credentials.json
+```
 
-## Contributing
+### 3. Add Credentials File
 
-We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) guide for details.
+Place your Google Cloud service account credentials in `credentials.json`.
+
+Alternatively, create `google-ads.yaml`:
+```yaml
+developer_token: "your-developer-token"
+use_proto_plus: True
+login_customer_id: "your-manager-account-id"
+json_key_file_path: "./credentials.json"
+```
+
+### 4. Run Server Locally
+
+```bash
+python server.py
+```
+
+## Deployment to Elast.io
+
+### Build Command
+```
+pip install --no-cache-dir -r requirements.txt
+```
+
+### Install Command
+```
+python -c "import sys; sys.exit(0)"
+```
+
+### Run Command
+```
+python server.py
+```
+
+### Environment Variables
+
+Set these in the Elast.io dashboard:
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `GOOGLE_PROJECT_ID` | Your Google Cloud Project ID | Yes |
+| `GOOGLE_ADS_DEVELOPER_TOKEN` | Google Ads API developer token | Yes |
+| `GOOGLE_CREDENTIALS_BASE64` | Base64-encoded service account JSON | Yes |
+| `GOOGLE_ADS_LOGIN_CUSTOMER_ID` | Manager account ID (if applicable) | No |
+
+#### How to Create GOOGLE_CREDENTIALS_BASE64
+
+```bash
+base64 -i credentials.json | tr -d '\n'
+```
+
+Copy the output and paste it as the `GOOGLE_CREDENTIALS_BASE64` environment variable.
+
+### Reverse Proxy Configuration
+
+- **Target**: `172.17.0.1`
+- **Port**: `8000`
+
+## API Usage
+
+### list_accessible_customers
+
+Returns list of customer IDs accessible to the authenticated account.
+
+```python
+# Example response
+["1234567890", "9876543210"]
+```
+
+### search
+
+Execute GAQL queries against Google Ads API.
+
+**Parameters:**
+- `customer_id` (str): Customer account ID
+- `query` (str): Full GAQL query, OR:
+- `fields` (list): Fields to select
+- `resource` (str): Resource to query from
+- `conditions` (list, optional): WHERE conditions
+- `orderings` (list, optional): ORDER BY clauses
+- `limit` (int, optional): Result limit
+
+**Example Query:**
+```python
+search(
+    customer_id="1234567890",
+    query="SELECT campaign.id, campaign.name FROM campaign WHERE campaign.status = 'ENABLED' LIMIT 10"
+)
+```
+
+**Example with Parameters:**
+```python
+search(
+    customer_id="1234567890",
+    fields=["campaign.id", "campaign.name", "campaign.status"],
+    resource="campaign",
+    conditions=["campaign.status = 'ENABLED'"],
+    limit=10
+)
+```
+
+## Security Notes
+
+- Never commit `.env` or `credentials.json` to version control
+- Use environment variables for sensitive data in production
+- For deployment, use base64-encoded credentials in `GOOGLE_CREDENTIALS_BASE64`
+- Service account should have minimal required permissions
+
+## Project Structure
+
+```
+google-ads-mcp-server/
+├── ads_mcp/                      # MCP module
+│   ├── __init__.py
+│   └── mcp_header_interceptor.py # gRPC interceptor
+├── server.py                     # Main server file
+├── requirements.txt              # Python dependencies
+├── .env.example                  # Environment template
+├── .gitignore                   # Git ignore rules
+├── credentials.json             # Service account (not in git)
+├── google-ads.yaml              # Optional config (not in git)
+└── README.md                    # This file
+```
+
+## Troubleshooting
+
+### Authentication Errors
+
+- Verify service account has Google Ads API access
+- Check developer token is valid and approved
+- Ensure credentials.json is properly formatted
+
+### No Data Returned
+
+- Verify customer_id has data
+- Check GAQL query syntax
+- Ensure account has active campaigns/resources
+
+### Import Errors
+
+- Run `pip install -r requirements.txt`
+- Check Python version is 3.10+
+
+## Resources
+
+- [Google Ads API Documentation](https://developers.google.com/google-ads/api/docs/start)
+- [GAQL Query Language](https://developers.google.com/google-ads/api/docs/query/overview)
+- [MCP Protocol](https://modelcontextprotocol.io/)
+- [Original google-ads-mcp Library](https://github.com/exelmedia/google_ads_mcp)
 
 ## License
 
-Google Ads MCP Server is an open-source project licensed under the [APACHE-2.0 License](LICENSE).
-
-## Contact
-
-If you have any questions, suggestions, or feedback, please feel free to open an issue.
+Apache 2.0
