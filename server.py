@@ -26,16 +26,6 @@ load_dotenv()
 # Initialize server
 mcp = FastMCP("Google Ads MCP Server")
 
-# Add health check endpoint for Elast.io via FastAPI app
-@mcp.app.get("/")
-async def health_check():
-    """Health check endpoint for deployment verification"""
-    return {
-        "status": "ok",
-        "server": "Google Ads MCP Server",
-        "transport": "sse"
-    }
-
 # Setup logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
