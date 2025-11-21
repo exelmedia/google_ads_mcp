@@ -14,10 +14,19 @@ import uvicorn
 # Add current directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from ads_mcp.coordinator import mcp
-
-# Import tools to register them
-from ads_mcp import tools  # noqa: F401
+try:
+    from ads_mcp.coordinator import mcp
+    print(f"✅ Imported mcp coordinator")
+    
+    # Import tools to register them
+    from ads_mcp import tools  # noqa: F401
+    print(f"✅ Imported tools module")
+    print(f"📊 Registered tools: {list(mcp._tool_manager._tools.keys())}")
+except Exception as e:
+    print(f"❌ Error importing MCP modules: {e}")
+    import traceback
+    traceback.print_exc()
+    raise
 
 app = FastAPI(title="Google Ads MCP HTTP Server")
 
