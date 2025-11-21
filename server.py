@@ -23,8 +23,8 @@ from ads_mcp.mcp_header_interceptor import MCPHeaderInterceptor
 # Load environment variables
 load_dotenv()
 
-# Initialize server
-mcp = FastMCP("Google Ads MCP Server")
+# Initialize server with SSE transport for HTTP deployment
+mcp = FastMCP("Google Ads MCP Server", transport="sse")
 
 # Setup logging
 logger = logging.getLogger(__name__)
